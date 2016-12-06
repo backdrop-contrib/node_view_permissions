@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Implements hook_uninstall(). 
+ * Implements hook_uninstall().
  */
 function node_view_permissions_uninstall() {
   //Remove the permissions from all roles

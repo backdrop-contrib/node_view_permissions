@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Page callback. 
+ * Page callback.
  */
 function node_view_permissions_settings_page_form($form, &$form_state) {
   $form['description'] = array(
@@ -28,7 +28,7 @@ function node_view_permissions_settings_page_form($form, &$form_state) {
 }
 
 /**
- * Submit handler. 
+ * Submit handler.
  */
 function node_view_permissions_settings_page_form_submit($form, &$form_state) {
   $config = config('node_view_permissions.settings');
