@@ -1,9 +1,15 @@
 <?php
 
 /**
- * Requirements.
+ * Implements hook_config_info().
  */
-require_once 'includes/node_view_permissions.api.inc';
+function node_view_permissions_config_info() {
+  $prefixes['node_view_permissions.settings'] = array(
+    'label' => t('Node View Permissions'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
 
 /**
  * Implements hook_menu().
@@ -14,9 +20,9 @@ function node_view_permissions_menu() {
   $items['admin/config/content/node-view-permissions'] = array(
     'title' => 'Node view permissions',
     'description' => t('Adds extra permissions "View own content" and "View any content" for each content type.'),
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('node_view_permissions_settings_page_form'),
-    'file' => 'includes/pages/node_view_permissions.settings.inc',
+    'file' => 'node_view_permissions.admin.inc',
     'access arguments' => array('administer site configuration'),
   );
 
@@ -28,20 +34,17 @@ function node_view_permissions_menu() {
  */
 function node_view_permissions_permission() {
   $perms = array();
-
   foreach (node_view_permissions_get_configured_types() as $type) {
-    $info = node_type_get_type($type);
-
+    $name = node_type_get_name($type);
     $perms += array(
       "view own $type content" => array(
-        'title' => t('%type_name: View own content', array('%type_name' => $info->name)),
+        'title' => t('%type_name: View own content', array('%type_name' => $name)),
       ),
       "view any $type content" => array(
-        'title' => t('%type_name: View any content', array('%type_name' => $info->name)),
+        'title' => t('%type_name: View any content', array('%type_name' => $name)),
       ),
     );
   }
-
   return $perms;
 }
 
@@ -153,4 +156,27 @@ function node_view_permissions_query_node_access_alter(QueryAlterableInterface $
     }
   }
 
+}
+
+/**
+ * Check if node type is enabled for view permissions
+ * return boolean
+ */
+function node_view_permissions_check_node_type_activation($type) {
+  $node_types = config_get('node_view_permissions.settings', 'node_types');
+  return (bool) $node_types[$type];
+}
+
+/**
+ * Get all node types enabled for view permissions
+ * return array node_types
+ */
+function node_view_permissions_get_configured_types() {
+  $node_types = config_get('node_view_permissions.settings', 'node_types');
+  foreach ($node_types as $type => $value) {
+    if (empty($value)) {
+      unset($node_types[$type]);
+    }
+  }
+  return $node_types;
 }

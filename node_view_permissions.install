@@ -4,12 +4,54 @@
  * Implements hook_uninstall(). 
  */
 function node_view_permissions_uninstall() {
-  // Remove variables for all node types, which are set by our module.
-  $query = db_delete('variable');
-  $query->condition('name', 'node_view_permissions_%', 'LIKE');
-  $query->execute();
-  
+  //Remove the permissions from all roles
+  $remove_perms = array();
+  foreach (node_type_get_types() as $type => $info) {
+    $remove_perms[] = 'view own ' . $type . ' content';
+    $remove_perms[] = 'view any ' . $type . ' content';
+  }
+  $roles = array();
+  foreach ($remove_perms as $perm) {
+    $role = user_roles(FALSE, $perm);
+    $roles = array_merge($roles, $role);
+  }
+  foreach ($roles as $role => $name) {
+    user_role_revoke_permissions($role, $remove_perms);
+  }
+
   if (count(module_implements('node_grants'))) {
     node_access_needs_rebuild(TRUE);
+    backdrop_set_message(t('You need to !rebuild_permissions.', array('!rebuild_permissions' => l(t('rebuild permissions'), 'admin/reports/status/rebuild'))));
   }
 }
+
+/**
+ * @defgroup updates-7.x-to-1.x Updates from 7.x to 1.x
+ * @{
+ * Update functions from Drupal 7.x to Backdrop CMS 1.x.
+ */
+
+/**
+ * Move Node View Permissions settings from variables to config.
+ */
+
+function node_view_permissions_update_1000() {
+
+  // Migrate variables to config.
+  $config = config('node_view_permissions.settings');
+  $result = db_query('SELECT * FROM {variable} WHERE name LIKE :name', array(':name' => '%node_view_permissions_%'));
+  $node_types = array();
+  foreach ($result as $record) {
+    $type = str_replace('node_view_permissions_','',$record->name);
+    $node_types[$type] = $record->value;
+    update_variable_del($record->name);
+  }
+  $config->set('node_types', $node_types);
+  $config->save();
+
+}
+
+/*
+ * @} End of "defgroup updates-7.x-to-1.x"
+ * The next series of updates should start at 2000.
+ */
