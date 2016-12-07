@@ -43,7 +43,8 @@ function node_view_permissions_update_1000() {
   $node_types = array();
   foreach ($result as $record) {
     $type = str_replace('node_view_permissions_','',$record->name);
-    $node_types[$type] = $record->value;
+    $value = unserialize($record->value);
+    $node_types[$type] = !empty($value) ? $type : 0;
     update_variable_del($record->name);
   }
   $config->set('node_types', $node_types);
